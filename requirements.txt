@@ -1,0 +1,9 @@
+
+pandas
+requests
+fastapi
+uvicorn
+python-dotenv
+groq
+pytest
+pytest-mock
