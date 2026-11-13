@@ -1,14 +1,20 @@
 # Pipeline ETL com Python e Inteligência Artificial Generativa
 
+![Python](https://img.shields.io/badge/Python-3.13-blue?logo=python)
+![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi)
+![Groq](https://img.shields.io/badge/IA-Groq-orange)
+![Pytest](https://img.shields.io/badge/Testes-Pytest-green?logo=pytest)
+![Status](https://img.shields.io/badge/Status-Concluído-success)
+
 ## Sobre o projeto
 
-Este projeto demonstra a construção de um pipeline ETL (*Extract, Transform, Load*) utilizando Python, integração de APIs, Inteligência Artificial Generativa e automação de envio de e-mails.
+Este projeto demonstra a construção de um pipeline ETL (*Extract, Transform, Load*) utilizando Python, integração de APIs e Inteligência Artificial Generativa.
 
-A proposta consiste em simular um processo de enriquecimento de dados de clientes, utilizando informações armazenadas em um arquivo CSV, consultando uma API local para recuperar dados complementares, gerando mensagens educativas personalizadas com auxílio de Inteligência Artificial, armazenando os resultados por meio de uma API e enviando as mensagens por e-mail.
+A proposta consiste em simular um processo de enriquecimento de dados de clientes, utilizando informações armazenadas em um arquivo CSV, consultando uma API local para recuperar dados complementares, gerando mensagens educativas personalizadas com auxílio de Inteligência Artificial e armazenando os resultados por meio de uma API.
 
 O projeto foi desenvolvido com dados fictícios, sem utilização de informações reais de clientes ou integração com sistemas bancários.
 
-A implementação busca demonstrar, na prática, conceitos de engenharia de dados, automação de processos, integração entre sistemas, tratamento de erros, controle de campanhas e testes automatizados.
+A implementação busca demonstrar, na prática, conceitos de engenharia de dados, automação de processos, integração entre sistemas, tratamento de erros e testes automatizados.
 
 ## Objetivos
 
@@ -18,14 +24,12 @@ A implementação busca demonstrar, na prática, conceitos de engenharia de dado
 - Enriquecer informações a partir de uma fonte externa ao CSV.
 - Utilizar Inteligência Artificial Generativa para produzir conteúdo personalizado.
 - Implementar mecanismos de tratamento de erros e prevenção de duplicidades.
-- Controlar o histórico de campanhas enviadas para cada cliente.
-- Automatizar o envio de mensagens por e-mail utilizando Gmail.
 - Registrar a execução do processo por meio de logs.
 - Desenvolver testes automatizados para validar as etapas do pipeline.
 
 ## Arquitetura do projeto
 
-O pipeline está dividido em cinco etapas principais:
+O pipeline está dividido em quatro etapas principais:
 
 ```text
               ARQUIVO CSV
@@ -42,7 +46,6 @@ O pipeline está dividido em cinco etapas principais:
                    v
              API FASTAPI
           Enriquecimento dos dados
-          Controle de campanhas
                    |
                    v
             DADOS COMPLETOS
@@ -65,15 +68,6 @@ O pipeline está dividido em cinco etapas principais:
                    |
                    v
            USERS.JSON ATUALIZADO
-                   |
-                   v
-             5. ENVIO DE E-MAIL
-                   |
-                   v
-              GMAIL SMTP
-                   |
-                   v
-           CLIENTES NOTIFICADOS
 ```
 
 ## Funcionamento do pipeline
@@ -93,7 +87,6 @@ Os dados de origem contêm informações como:
 O módulo utiliza a biblioteca Pandas para realizar a leitura e conversão dos registros em uma estrutura de dados manipulável pelo Python.
 
 Também são realizadas validações para verificar:
-
 - Existência do arquivo.
 - Presença das colunas obrigatórias.
 - Integridade do identificador numérico dos clientes.
@@ -110,13 +103,8 @@ A API disponibiliza informações complementares dos clientes, como:
 - Objetivo financeiro.
 - Perfil.
 - Histórico de mensagens.
-- Histórico de campanhas já processadas.
 
 O enriquecimento acontece por meio de requisições HTTP, utilizando o identificador de cada cliente para localizar seu cadastro.
-
-Também é implementado um mecanismo de controle de campanhas. Antes de encaminhar os clientes para a geração de mensagens, o processo verifica se a campanha atual já foi enviada.
-
-Clientes que já receberam a campanha são ignorados, evitando chamadas desnecessárias à Inteligência Artificial e o processamento duplicado.
 
 Arquivo responsável: `etl/transform.py`
 
@@ -129,7 +117,6 @@ Modelo utilizado: `openai/gpt-oss-20b`.
 Cada cliente recebe uma mensagem educativa gerada considerando informações como nome, perfil e objetivo financeiro.
 
 O prompt possui orientações para produzir textos:
-
 - Personalizados de acordo com os dados disponíveis.
 - Simples, naturais e profissionais.
 - Voltados à educação e organização financeira.
@@ -142,54 +129,24 @@ Arquivo responsável: `etl/ai.py`
 
 ### 4. Load — Carregamento
 
-Nesta etapa, as mensagens geradas são encaminhadas para a API FastAPI, que realiza a atualização do cadastro de cada cliente.
+Na última etapa, as mensagens geradas são encaminhadas para a API FastAPI, que realiza a atualização do cadastro de cada cliente.
 
-O processo utiliza um identificador de campanha (`campaign_id`) para controlar o histórico de mensagens enviadas.
+Antes da gravação, o processo consulta o cadastro e verifica se a mensagem já existe.
 
-Antes da gravação, a API verifica se aquela campanha já foi processada para o cliente.
-
-Caso a campanha já esteja registrada, a operação é ignorada. Caso contrário, a mensagem é armazenada e o identificador da campanha é adicionado ao histórico do cliente.
-
-Esse mecanismo garante maior controle sobre a execução e evita o reprocessamento de campanhas já realizadas.
+Caso encontre uma mensagem exatamente igual, a gravação é ignorada.
 
 O módulo também possui tratamento de erros para:
-
 - Problemas de comunicação com a API.
 - Falhas durante a consulta dos clientes.
 - Inconsistências nos dados.
 - Falhas durante o carregamento.
 
 Ao final, é apresentado um resumo contendo:
-
 - Quantidade de mensagens gravadas.
 - Quantidade de mensagens ignoradas.
 - Quantidade de operações com falha.
 
 Arquivo responsável: `etl/load.py`
-
-### 5. Envio de e-mails — Comunicação com os clientes
-
-Após o carregamento das mensagens na API, o pipeline realiza automaticamente o envio dos conteúdos por e-mail.
-
-A integração utiliza o servidor SMTP do Gmail, com autenticação por credenciais armazenadas em variáveis de ambiente.
-
-O processo considera:
-
-- Envio da mensagem personalizada para o endereço cadastrado.
-- Utilização do nome do cliente e do conteúdo gerado pela IA.
-- Identificação de clientes sem endereço de e-mail cadastrado.
-- Registro dos envios realizados.
-- Tratamento de falhas durante a comunicação com o servidor SMTP.
-
-Clientes sem e-mail cadastrado são ignorados, sem interromper o processamento dos demais.
-
-Ao final, o sistema apresenta um resumo contendo:
-
-- Quantidade de e-mails enviados.
-- Quantidade de envios ignorados.
-- Quantidade de falhas.
-
-Arquivo responsável: `etl/email.py`
 
 ## API REST com FastAPI
 
@@ -197,18 +154,14 @@ O projeto possui uma API local responsável por disponibilizar os cadastros dos 
 
 A persistência dos dados é realizada em um arquivo JSON (`api/users.json`).
 
-Além das informações cadastrais e do histórico de mensagens, a API mantém o histórico de campanhas processadas para cada cliente, permitindo controlar a duplicidade de envios.
-
 ### Endpoints disponíveis
 
 | Método | Endpoint | Descrição |
-| ------ | ----------------------- | -------------------------------- |
+|---|---|---|
 | GET | `/` | Verifica o funcionamento da API |
 | GET | `/users` | Lista todos os clientes |
 | GET | `/users/{user_id}` | Consulta um cliente específico |
-| PUT | `/users/{user_id}/news` | Adiciona uma mensagem e registra a campanha |
-
-O endpoint de atualização recebe o conteúdo da mensagem e o identificador da campanha (`campaign_id`).
+| PUT | `/users/{user_id}/news` | Adiciona uma mensagem ao cliente |
 
 A documentação interativa dos endpoints pode ser acessada pelo Swagger:
 
@@ -230,8 +183,7 @@ santander_etl/
 │   ├── extract.py
 │   ├── transform.py
 │   ├── ai.py
-│   ├── load.py
-│   └── email.py
+│   └── load.py
 │
 ├── logs/
 │   └── etl.log
@@ -250,20 +202,17 @@ santander_etl/
 ### Descrição dos principais arquivos
 
 | Arquivo | Responsabilidade |
-| ------------------ | -------------------------------------- |
-| `main.py` | Orquestra a execução das cinco etapas do pipeline |
+|---|---|
+| `main.py` | Orquestra a execução do pipeline |
 | `etl/extract.py` | Extração e validação dos dados |
-| `etl/transform.py` | Consulta, enriquecimento e controle de campanhas |
+| `etl/transform.py` | Consulta e enriquecimento dos clientes |
 | `etl/ai.py` | Integração com a IA generativa |
 | `etl/load.py` | Carregamento das mensagens na API |
-| `etl/email.py` | Envio automático de mensagens por e-mail |
 | `api/api.py` | Implementação da API REST |
-| `api/users.json` | Armazenamento dos cadastros e históricos |
+| `api/users.json` | Armazenamento dos cadastros |
 | `data/SDW2023.csv` | Base de dados de origem |
 | `logs/etl.log` | Histórico das execuções |
 | `requirements.txt` | Dependências do projeto |
-| `.env` | Armazenamento local das credenciais e variáveis de ambiente |
-| `.gitignore` | Configuração de arquivos ignorados pelo Git |
 
 ## Tecnologias e ferramentas
 
@@ -272,7 +221,6 @@ santander_etl/
 - **FastAPI:** construção da API REST.
 - **Requests:** comunicação entre as aplicações.
 - **Groq API:** integração com Inteligência Artificial Generativa.
-- **Gmail SMTP:** envio automatizado de mensagens por e-mail.
 - **python-dotenv:** gerenciamento de variáveis de ambiente.
 - **Logging:** registro de eventos, informações e erros.
 - **Pytest:** execução dos testes automatizados.
@@ -287,7 +235,6 @@ santander_etl/
 - Git.
 - Conta na GroqCloud.
 - Chave de API da Groq.
-- Conta Gmail com configuração de senha de aplicativo para autenticação SMTP.
 
 ### 1. Clonar o repositório
 
@@ -319,25 +266,17 @@ Ative o ambiente virtual no Windows PowerShell:
 python -m pip install -r requirements.txt
 ```
 
-### 4. Configurar as variáveis de ambiente
+### 4. Configurar a chave da Groq
 
 Crie um arquivo `.env` na raiz do projeto:
 
 ```env
 GROQ_API_KEY=sua_chave_api
-EMAIL_USER=seu_email@gmail.com
-EMAIL_PASSWORD=sua_senha_de_aplicativo
 ```
 
-Substitua os valores de exemplo pelas credenciais correspondentes:
+Substitua `sua_chave_api` pela chave obtida na plataforma GroqCloud.
 
-- `GROQ_API_KEY`: chave de autenticação da API Groq.
-- `EMAIL_USER`: endereço Gmail utilizado para envio.
-- `EMAIL_PASSWORD`: senha de aplicativo do Gmail.
-
-**Importante:** nunca compartilhe ou publique suas chaves e senhas. O arquivo `.env` está protegido pelo `.gitignore` e não deve ser enviado ao GitHub.
-
-Para utilizar o Gmail, configure uma senha de aplicativo na conta Google, quando disponível. Não utilize a senha normal de acesso à conta.
+**Importante:** nunca compartilhe ou publique sua chave de API. O arquivo `.env` está protegido pelo `.gitignore`.
 
 ### 5. Iniciar a API
 
@@ -359,17 +298,7 @@ Abra outro terminal, mantendo o ambiente virtual ativado, e execute:
 python main.py
 ```
 
-O processo realizará automaticamente as cinco etapas:
-
-1. Extração dos dados.
-2. Transformação e enriquecimento dos clientes.
-3. Geração de mensagens com IA.
-4. Carregamento das mensagens na API.
-5. Envio dos e-mails aos clientes cadastrados.
-
-O identificador da campanha é definido no arquivo `main.py`, por meio da variável `CAMPAIGN_ID`.
-
-Para executar uma nova campanha, utilize um identificador diferente. Clientes que já receberam a campanha identificada não serão processados novamente.
+O processo realizará automaticamente as quatro etapas: extração, transformação, geração de mensagens com IA e carregamento.
 
 ### 7. Consultar os logs
 
@@ -379,7 +308,7 @@ Os registros da execução são armazenados em:
 logs/etl.log
 ```
 
-Os logs permitem acompanhar as etapas executadas, quantidades processadas, envios realizados e eventuais erros.
+Os logs permitem acompanhar as etapas executadas, quantidades processadas e eventuais erros.
 
 ## Testes automatizados
 
@@ -388,12 +317,12 @@ O projeto possui testes automatizados desenvolvidos com Pytest, utilizando mocks
 Os testes verificam:
 
 | Módulo | Cenários validados | Quantidade |
-| ----------------------- | ------------------------------------------------------- | ---------- |
+|---|---|---:|
 | Extração | Leitura correta, arquivo inexistente e colunas ausentes | 3 |
-| Transformação | Consulta bem-sucedida, campanha já processada e falha de comunicação | 3 |
+| Transformação | Consulta bem-sucedida e falha de comunicação | 2 |
 | Inteligência Artificial | Resposta válida, resposta vazia e múltiplos clientes | 3 |
 | Carregamento | Gravação, duplicidade e falha na API | 3 |
-| **Total** | | **12** |
+| **Total** | | **11** |
 
 Para executar todos os testes:
 
@@ -404,14 +333,14 @@ python -m pytest -v
 ### Resultado da validação
 
 ```text
-collected 12 items
+collected 11 items
 
-test_ai.py PASSED
-test_extract.py PASSED
-test_load.py PASSED
-test_transform.py PASSED
+test_ai.py ................ PASSED
+test_extract.py ........... PASSED
+test_load.py .............. PASSED
+test_transform.py ......... PASSED
 
-12 passed
+11 passed
 ```
 
 Os testes utilizam simulações para evitar chamadas desnecessárias à API da Groq e gravações reais durante as validações automatizadas.
@@ -424,22 +353,18 @@ O pipeline implementa mecanismos para melhorar a confiabilidade da execução:
 - Verificação da disponibilidade dos arquivos.
 - Controle de tempo limite nas requisições HTTP.
 - Tratamento de erros de comunicação.
-- Prevenção do reprocessamento de campanhas já enviadas.
-- Controle do histórico de campanhas por cliente.
-- Tratamento de clientes sem e-mail cadastrado.
-- Tratamento de falhas durante o envio de e-mails.
+- Prevenção de gravações de mensagens exatamente iguais.
 - Registro de eventos e exceções.
-- Resumo quantitativo do carregamento e dos envios.
+- Resumo quantitativo do carregamento.
 - Testes automatizados dos principais cenários.
-- Proteção das credenciais por meio de variáveis de ambiente.
 
 ## Considerações finais
 
 Este projeto foi desenvolvido com o objetivo de explorar a aplicação prática de Python na construção de pipelines de dados, demonstrando como diferentes tecnologias podem trabalhar de forma integrada.
 
-A solução reúne extração e transformação de dados, integração de APIs, persistência de informações, utilização de Inteligência Artificial Generativa, controle de campanhas, automação de envio de e-mails e testes de software.
+A solução reúne extração e transformação de dados, integração de APIs, persistência de informações, utilização de Inteligência Artificial Generativa, automação e testes de software.
 
-Mais do que demonstrar a execução de um processo ETL, o projeto representa uma oportunidade de aplicar conceitos de engenharia de dados, integração entre sistemas e automação de processos em um cenário prático.
+Mais do que demonstrar a execução de um processo ETL, o projeto representa uma oportunidade de aplicar conceitos de integração entre sistemas e automação de processos em um cenário prático.
 
 ---
 
