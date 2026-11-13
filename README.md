@@ -16,7 +16,7 @@ O projeto foi desenvolvido com dados fictícios, sem utilização de informaçõ
 
 A implementação busca demonstrar, na prática, conceitos de engenharia de dados, automação de processos, integração entre sistemas, tratamento de erros, controle de campanhas e testes automatizados.
 
-Objetivos
+## Objetivos
 
 Desenvolver um pipeline ETL utilizando Python.
 
