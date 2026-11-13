@@ -22,6 +22,7 @@ def save_users(users):
 
 class NewsRequest(BaseModel):
     message: str
+    campaign_id: str
 
 
 @app.get("/")
@@ -45,17 +46,34 @@ def get_user(user_id: int):
     raise HTTPException(status_code=404, detail="Cliente não encontrado")
 
 
+
 @app.put("/users/{user_id}/news")
 def add_news(user_id: int, request: NewsRequest):
     users = load_users()
 
     for user in users:
         if user["id"] == user_id:
+
+            # Histórico das campanhas já processadas
+            sent_campaigns = user.setdefault("sent_campaigns", [])
+
+            # Verifica se a campanha já foi processada
+            if request.campaign_id in sent_campaigns:
+                return {
+                    "message": "Esta campanha já foi processada para este cliente.",
+                    "already_sent": True,
+                    "user": user
+                }
+
+            # Registra a mensagem e a campanha
             user["news"].append(request.message)
+            sent_campaigns.append(request.campaign_id)
+
             save_users(users)
 
             return {
-                "message": "Notícia adicionada com sucesso",
+                "message": "Mensagem adicionada com sucesso.",
+                "already_sent": False,
                 "user": user
             }
 

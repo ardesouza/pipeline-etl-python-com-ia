@@ -4,7 +4,7 @@ import requests
 API_URL = "http://127.0.0.1:8000"
 
 
-def transform_users(users):
+def transform_users(users, campaign_id):
     enriched_users = []
 
     for user in users:
@@ -20,6 +20,12 @@ def transform_users(users):
 
         # Recupera o cadastro completo
         api_user = response.json()
+
+        # Verifica se o cliente já recebeu a campanha
+        sent_campaigns = api_user.get("sent_campaigns", [])
+
+        if campaign_id in sent_campaigns:
+            continue
 
         enriched_users.append(api_user)
 

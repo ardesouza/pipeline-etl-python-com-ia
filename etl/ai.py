@@ -96,6 +96,7 @@ def generate_messages(users):
         messages.append({
             "user_id": user["id"],
             "name": user["name"],
+            "email": user.get("email"),
             "message": message
         })
 
